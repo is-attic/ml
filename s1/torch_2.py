@@ -10,7 +10,7 @@ DOMAIN_SIZE = 16
 
 INPUT_SIZE = 1
 OUTPUT_SIZE = DOMAIN_SIZE
-HIDDEN_SIZE = 100
+HIDDEN_SIZE = 16
 
 
 a = np.arange(DOMAIN_SIZE, dtype = np.float32)
@@ -34,7 +34,8 @@ class Net(torch.nn.Module):
     self.out = torch.nn.Linear(n_hidden, n_output)
 
   def forward(self, x):
-    x = F.relu(self.hidden(x))
+    #x = F.relu(self.hidden(x))
+    x = F.sigmoid(self.hidden(x))
     x = self.out(x)
     return x
 
@@ -45,9 +46,9 @@ loss_func = torch.nn.MSELoss()
 
 target_y = np.arange(DOMAIN_SIZE)
 
-for t in range(40000):
+for t in range(30000):
   out = net(x)
-  loss = loss_func(out, y * 2)
+  loss = loss_func(out, y)
   optimizer.zero_grad()
   loss.backward()
   optimizer.step()
@@ -63,5 +64,6 @@ out = net(x)
 prediction = torch.max(F.softmax(out), 1)[1]
 print(prediction)
 print(out.data.numpy())
+print(np.argmax(out.data.numpy(),1))
 #prediction = torch.max(F.softmax(out), 1)
 
