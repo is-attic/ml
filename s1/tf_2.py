@@ -38,7 +38,8 @@ output = tf.layers.dense(layer1, OUTPUT_SIZE)
 
 correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(tf_y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=tf_y, logits=output)) + tf.reduce_mean(tf.abs(tf_y))
+loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+  labels=tf_y, logits=output))
 #loss = tf.reduce_mean(tf.pow(tf_y * 10 - output, 2))
 #optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.1)
 optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
