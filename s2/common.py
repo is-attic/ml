@@ -92,9 +92,29 @@ def G_x_ccc_ddd_x():
   label = ('D' * n0) + label + ('D' * n1)
   return seed, label
 
+
+def G_dd_ccc_ddd():
+  n = random.randint(1, 3)
+  w0 = digits(n)
+  l0 = 'D' * n
+  w1, l1 = G_ccc_ddd()
+  return w0 + w1, l0 + l1
+
+
+def G_x_dd_ccc_ddd_x():
+  seed, label = G_dd_ccc_ddd()
+  n0 = random.randint(0, 5)
+  n1 = random.randint(0, 5)
+  seed = ('_' * n0) + seed + ('_' * n1)
+  label = ('D' * n0) + label + ('D' * n1)
+  return seed, label
+
+
 GS = [
   G_ccc_ddd,
-  G_x_ccc_ddd_x]
+  G_x_ccc_ddd_x,
+  G_dd_ccc_ddd,
+  G_x_dd_ccc_ddd_x]
 
 
 def G():
