@@ -63,7 +63,7 @@ public class S1 {
     System.out.println(Y);
   
     DataSet ds = new DataSet(X, Y);
-    for (int i = 0; i < 20000; ++i) {
+    for (int i = 0; i < 10000; ++i) {
       model.fit(ds);
     }
     

@@ -1,1 +1,12 @@
 .idea
+
+*.ipr
+*.iml
+*.iws
+
+__pycache__
+
+s1/dl4j/target
+s1/dl4j/logs
+
+s2/model
