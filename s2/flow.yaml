@@ -1,6 +1,6 @@
 ---
-timestep: 16
-hidden_size: 64
+timestep: 32
+hidden_size: 256
 output_size: 2
 input_size: 2
 learning_rate: 0.01

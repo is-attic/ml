@@ -9,4 +9,5 @@ __pycache__
 s1/dl4j/target
 s1/dl4j/logs
 
+s2/log
 s2/model

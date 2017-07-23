@@ -59,11 +59,10 @@ def char_to_vector(ch):
   return (LAB_UNK, o)
 
 
-
-
-
 def chars(n):
   return ''.join([string.ascii_uppercase[random.randint(0, 25)] for x in range(n)])
+
+
 def digits(n):
   return ''.join([string.digits[random.randint(0,9)] for x in range(n)])
 
@@ -118,3 +117,12 @@ def train_data_numpy_array(batch_size, timestep, datas):
 
   return (x, y)
 
+
+def numpy_array_to_label(a, origin = None):
+  L = 'KD'
+  labels = ''.join([L[x] for x in np.argmax(a, 1)])
+
+  if origin != None:
+    return labels[:len(origin)]
+
+  return labels

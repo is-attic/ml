@@ -3,6 +3,8 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import sys
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import tensorflow as tf
@@ -10,9 +12,11 @@ from tensorflow.contrib import rnn
 
 from common import *
 
+
 def init_config():
   conf = config_update('flow.yaml')
   return config_freeze(conf)
+
 
 print('loading config ...')
 C = init_config()
@@ -23,6 +27,8 @@ OUTPUT_SIZE = C.output_size
 TIMESTEP = C.timestep
 LEARNING_RATE = C.learning_rate
 BATCH_SIZE = C.batch_size
+
+ACTION = 'train'
 
 display_step = 200
 random.seed(0x1234)
@@ -36,11 +42,11 @@ def BiRNN(x, n_timestep, n_hidden, weight, bias):
   n_output = bias.shape[0].value
 
   x = tf.unstack(x, n_timestep, 1)
-  lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias = 1.0)
-  lstm_bw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias = 1.0)
+  lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+  lstm_bw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
 
   outputs, _, _ = rnn.static_bidirectional_rnn(
-    lstm_fw_cell, lstm_bw_cell, x, dtype = tf.float32)
+    lstm_fw_cell, lstm_bw_cell, x, dtype=tf.float32)
   # weight: tf.Variable(tf.random_normal([2*n_hidden, n_classes]))
   # bias: tf.Variable(tf.random_normal([n_classes]))
 
@@ -51,7 +57,8 @@ def BiRNN(x, n_timestep, n_hidden, weight, bias):
 
 
 def train_data_source(batch_size):
-  return [ G_ccc_ddd() for x in range(batch_size)]
+  return [G_ccc_ddd() for x in range(batch_size)]
+
 
 ## __variables
 W = {}
@@ -65,37 +72,83 @@ W['out'] = tf.Variable(tf.random_normal([2 * HIDDEN_SIZE, OUTPUT_SIZE]))
 B['out'] = tf.Variable(tf.random_normal([OUTPUT_SIZE]))
 
 pred = BiRNN(X, TIMESTEP, HIDDEN_SIZE, W['out'], B['out'])
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = pred, labels = Y))
-optimizer = tf.train.AdamOptimizer(learning_rate = LEARNING_RATE).minimize(cost)
+loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=Y))
+optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(loss)
 
 correct_pred = tf.equal(tf.argmax(pred, 2), tf.argmax(Y, 2))
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-init = tf.global_variables_initializer()
 
-best_loss = 100000
-sess = tf.Session()
-saver = tf.train.Saver()
-sess.run(init)
+def train():
+  tf.summary.scalar('loss', loss)  # add loss to scalar summary
+  init = tf.global_variables_initializer()
+  best_loss = 100000
+  sess = tf.Session()
+  saver = tf.train.Saver()
+  sess.run(init)
+  writer = tf.summary.FileWriter('./log', sess.graph)
+  merge_op = tf.summary.merge_all()
 
-for step in range(20000):
+  for step in range(20000):
+    _x, _y = train_data_numpy_array(
+      batch_size=BATCH_SIZE,
+      timestep=TIMESTEP,
+      datas=train_data_source(BATCH_SIZE))
+
+    feed_dict = {
+      X: _x,
+      Y: _y
+    }
+
+    _, result = sess.run([optimizer, merge_op], feed_dict=feed_dict)
+    writer.add_summary(result, step)
+
+    if step % display_step == 0:
+      loss_, accu = sess.run([loss, accuracy], feed_dict=feed_dict)
+      print("%d %e %.2f%%" % (step * BATCH_SIZE, loss_, accu * 100))
+      if loss_ < best_loss:
+        saver_path = saver.save(sess,
+          'model/model_flow_0_full_ce.ckpt',
+          write_meta_graph = False)
+        best_loss = loss_
+        # print("save model to" + saver_path + "for " + str(loss))
+        print("____")
+
+
+
+def test():
+  sess = tf.Session()
+  saver = tf.train.Saver()
+  saver.restore(sess, 'model/model_flow_0_full_ce.ckpt')
+  datas = train_data_source(1)
+
   _x, _y = train_data_numpy_array(
-    batch_size = BATCH_SIZE,
-    timestep= TIMESTEP,
-    datas = train_data_source(BATCH_SIZE))
+    batch_size=1,
+    timestep=TIMESTEP,
+    datas = datas)
 
-  feed_dict = {
-    X: _x,
-    Y: _y
-  }
+  p = sess.run(pred, feed_dict = {X: _x})
+  print(datas[0][0])
+  #print(p[0])
+  print(numpy_array_to_label(p[0], origin = datas[0][0]))
 
-  sess.run(optimizer, feed_dict = feed_dict)
 
-  if step % display_step == 0:
-    loss, accu = sess.run([cost, accuracy], feed_dict = feed_dict)
-    print("%d %e %.2f%%" % (step * BATCH_SIZE, loss, accu * 100))
-    if loss < best_loss:
-      saver_path = saver.save(sess, 'model/model_flow_0_full_ce.ckpt')
-      best_loss = loss
-      #print("save model to" + saver_path + "for " + str(loss))
-      print("____")
+def main():
+  global ACTION
+
+  argv = list(sys.argv)
+  while len(argv) != 0:
+    if argv[0] == 'test':
+      argv.pop(0)
+      ACTION = 'test'
+      continue
+    argv.pop(0)
+
+  if ACTION == 'train':
+    train()
+  else:
+    test()
+
+
+if __name__ == '__main__':
+  main()
