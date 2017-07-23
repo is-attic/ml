@@ -1,11 +1,14 @@
 from common import *
 
-random.seed(1234)
+random.seed()
 
-datas = [ G_ccc_ddd() for x in range(10)]
+datas = [ G() for x in range(10)]
 
-xx , yy = train_data_numpy_array(10, 16, datas)
+xx , yy = train_data_numpy_array(48, 32, datas)
 
-print(datas[0])
-print(xx[0])
-print(yy[0])
+# print(datas[0])
+# print(xx[0])
+# print(yy[0])
+
+for i in datas:
+  print("%s -> %s" % i)

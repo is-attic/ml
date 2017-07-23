@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import os
 import sys
+import time
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -57,7 +58,7 @@ def BiRNN(x, n_timestep, n_hidden, weight, bias):
 
 
 def train_data_source(batch_size):
-  return [G_ccc_ddd() for x in range(batch_size)]
+  return [G() for x in range(batch_size)]
 
 
 ## __variables
@@ -89,6 +90,7 @@ def train():
   writer = tf.summary.FileWriter('./log', sess.graph)
   merge_op = tf.summary.merge_all()
 
+  last_ts = time.time()
   for step in range(20000):
     _x, _y = train_data_numpy_array(
       batch_size=BATCH_SIZE,
@@ -104,8 +106,10 @@ def train():
     writer.add_summary(result, step)
 
     if step % display_step == 0:
+      cur_ts = time.time()
       loss_, accu = sess.run([loss, accuracy], feed_dict=feed_dict)
-      print("%d %e %.2f%%" % (step * BATCH_SIZE, loss_, accu * 100))
+      print("[%.2fs] %d %e %.2f%%" % (cur_ts - last_ts, step * BATCH_SIZE, loss_, accu * 100))
+      last_ts = cur_ts
       if loss_ < best_loss:
         saver_path = saver.save(sess,
           'model/model_flow_0_full_ce.ckpt',
@@ -120,17 +124,19 @@ def test():
   sess = tf.Session()
   saver = tf.train.Saver()
   saver.restore(sess, 'model/model_flow_0_full_ce.ckpt')
-  datas = train_data_source(1)
+  datas = train_data_source(40)
+
+  random.seed()
 
   _x, _y = train_data_numpy_array(
-    batch_size=1,
-    timestep=TIMESTEP,
+    batch_size = len(datas),
+    timestep = TIMESTEP,
     datas = datas)
 
   p = sess.run(pred, feed_dict = {X: _x})
-  print(datas[0][0])
-  #print(p[0])
-  print(numpy_array_to_label(p[0], origin = datas[0][0]))
+  for i in range(len(datas)):
+    label = numpy_array_to_label(p[i], origin = datas[i][0])
+    print("%s %s %s %s" % (datas[i][0], label, datas[i][1], label == datas[i][1]))
 
 
 def main():

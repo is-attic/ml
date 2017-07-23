@@ -68,7 +68,38 @@ def digits(n):
 
 
 def G_ccc_ddd():
-  return chars(3) + "-" + digits(3), 'KKKDKKK'
+  n = random.randint(2, 3)
+  d = random.random()
+
+  w0 = chars(n)
+  l0 = 'K' * n
+  if d > 0.5:
+    w1 = '-'
+    l1 = 'D'
+  else:
+    w1 = ''
+    l1 = ''
+  w2 = digits(3)
+  l2 = 'KKK'
+  return w0 + w1 + w2, l0 + l1 + l2
+
+
+def G_x_ccc_ddd_x():
+  seed, label = G_ccc_ddd()
+  n0 = random.randint(0, 5)
+  n1 = random.randint(0, 5)
+  seed = ('_' * n0) + seed + ('_' * n1)
+  label = ('D' * n0) + label + ('D' * n1)
+  return seed, label
+
+GS = [
+  G_ccc_ddd,
+  G_x_ccc_ddd_x]
+
+
+def G():
+  i = random.randint(0, len(GS) - 1)
+  return GS[i]()
 
 
 def seq_to_vector(s):
